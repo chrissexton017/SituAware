@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">SituAware</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_activity_report_incident">ReportIncidentActivity</string>
+    <string name="spinner_title">Select Category</string>
+
+    <string-array name="incident_type_array">
+        <item>Accident</item>
+        <item>Anti-social Behaviour</item>
+        <item>Assault</item>
+        <item>Fire</item>
+        <item>Pickpocketing</item>
+        <item>Theft</item>
+        <item>Terrorist Attack</item>
+        <item>Vandalism</item>
+    </string-array>
+
+    <string-array name="incident_detail_array">
+        <item>People being dicks</item>
+        <item>Arseholes</item>
+        <item>Clowns</item>
+        <item>Knobheads</item>
+        <item>Hooligans</item>
+        <item>Rascals</item>
+        <item>Biker Gang</item>
+        <item>Idiots</item>
+    </string-array>
+
+    <string-array name="incident_time_array">
+        <item>Happening now</item>
+        <item>Happened earlier (choose time)</item>
+    </string-array>
+
+    <string-array name="incident_location_array">
+        <item>My current location</item>
+        <item>Another place (choose location)</item>
+    </string-array>
+
+
+</resources>
