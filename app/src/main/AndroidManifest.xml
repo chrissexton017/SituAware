@@ -3,6 +3,8 @@
     package="com.example.chris.situaware">
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!-- Internet Permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"

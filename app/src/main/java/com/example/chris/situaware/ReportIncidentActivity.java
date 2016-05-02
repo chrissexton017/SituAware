@@ -1,9 +1,13 @@
 package com.example.chris.situaware;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -11,6 +15,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -45,6 +50,11 @@ import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStates;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
 
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 public class ReportIncidentActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
     String[] spinners = {"Incident", "Incident Detail", "Time", "Place", "Ongoing"};
@@ -52,6 +62,26 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     Location mLastLocation;
     String mLatitude;
     String mLongitude;
+    String mIncidentCode;
+    String mIncidentDetail;
+    String mTime;
+    Long time;
+    // Progress Dialog
+    private ProgressDialog pDialog;
+
+    private Spinner mSpinner;
+    private Spinner mSpinner2;
+    private Spinner mSpinner3;
+    private Spinner mSpinner4;
+
+    // JSON parser class
+    JSONParser jsonParser = new JSONParser();
+
+    // url to save report
+    private static final String url_save_report = "http://10.0.2.2:80//situaware/save_incident_report.php";
+
+    // JSON Node names
+    private static final String TAG_SUCCESS = "success";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,26 +111,26 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         fab.hide();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        Spinner spinner = (Spinner)findViewById(R.id.spinner);
-        spinner.setOnItemSelectedListener(this);
+        mSpinner = (Spinner)findViewById(R.id.spinner);
+        mSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(this,
                 R.array.incident_type_array, R.layout.spinner_item);
-        spinner.setAdapter(spinnerAdapter);
-        Spinner spinner2 = (Spinner)findViewById(R.id.spinner2);
-        spinner2.setOnItemSelectedListener(this);
+        mSpinner.setAdapter(spinnerAdapter);
+        mSpinner2 = (Spinner)findViewById(R.id.spinner2);
+        mSpinner2.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinner2Adapter = ArrayAdapter.createFromResource(this,
                 R.array.incident_detail_array, R.layout.spinner_item);
-        spinner2.setAdapter(spinner2Adapter);
-        Spinner spinner3 = (Spinner)findViewById(R.id.spinner3);
-        spinner3.setOnItemSelectedListener(this);
+        mSpinner2.setAdapter(spinner2Adapter);
+        mSpinner3 = (Spinner)findViewById(R.id.spinner3);
+        mSpinner3.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinner3Adapter = ArrayAdapter.createFromResource(this,
                 R.array.incident_time_array, R.layout.spinner_item);
-        spinner3.setAdapter(spinner3Adapter);
-        Spinner spinner4 = (Spinner)findViewById(R.id.spinner4);
+        mSpinner3.setAdapter(spinner3Adapter);
+        mSpinner4 = (Spinner)findViewById(R.id.spinner4);
         ArrayAdapter<CharSequence> spinner4Adapter = ArrayAdapter.createFromResource(this,
                 R.array.incident_location_array, R.layout.spinner_item);
-        spinner4.setAdapter(spinner4Adapter);
-        spinner4.setOnItemSelectedListener(this);
+        mSpinner4.setAdapter(spinner4Adapter);
+        mSpinner4.setOnItemSelectedListener(this);
 
     }
 
@@ -126,7 +156,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 mLongitude = String.valueOf(mLastLocation.getLongitude());
             }
         } catch(SecurityException ex) {
-
+            System.out.println("SECURITY EXCEPTION");
         }
 
     }
@@ -138,7 +168,9 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
 
     @Override
     public void onConnectionFailed(ConnectionResult result) {
-
+        System.out.println(result.toString());
+        mLatitude = String.valueOf(56.048495);
+        mLongitude = String.valueOf(14.147706);
     }
 
     /*protected void createLocationRequest() {
@@ -209,7 +241,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                             timePicker.getCurrentHour(),
                             timePicker.getCurrentMinute());
 
-                    //time = calendar.getTimeInMillis();
+                    time = calendar.getTimeInMillis();
                     alertDialog.dismiss();
                 }});
             alertDialog.setView(dialogView);
@@ -224,6 +256,126 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     public void onNothingSelected(AdapterView<?> arg0) {
         // TODO Auto-generated method stub
 
+    }
+
+    public void submitReport(View view) {
+        mIncidentCode = String.valueOf(mSpinner.getSelectedItemPosition()+1);
+        mIncidentDetail = String.valueOf(mSpinner2.getSelectedItemPosition()+1);
+        mTime = "CURRENT_TIMESTAMP";
+        AlertDialog.Builder alert = new AlertDialog.Builder(
+                this);
+        alert.setTitle("Submit report?");
+        alert.setMessage("Are you sure you want to submit this incident report?");
+        alert.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                new SaveReport().execute();
+                dialog.dismiss();
+
+            }
+        });
+        alert.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                dialog.dismiss();
+            }
+        });
+
+        alert.show();
+
+    }
+
+    /**
+     * Represents an asynchronous login/registration task used to authenticate
+     * the user.
+     */
+    public class SaveReport extends AsyncTask<Void, Void, Boolean> {
+
+        /*private final String mEmail;
+        private final String mPassword;
+        private final String mTeamName;
+        private final String mCountry;
+        private final String mCity;*/
+
+        /*SaveReport(String email, String password, String teamName, String country, String city) {
+            mEmail = email;
+            mPassword = password;
+            mTeamName = teamName;
+            mCountry = country;
+            mCity = city;
+        }*/
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            pDialog = new ProgressDialog(ReportIncidentActivity.this);
+            pDialog.setMessage("Saving report");
+            pDialog.setIndeterminate(false);
+            pDialog.setCancelable(true);
+            pDialog.show();
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            // Building Parameters
+            List<NameValuePair> parameters = new ArrayList<NameValuePair>();
+            parameters.add(new BasicNameValuePair("incident_code", mIncidentCode));
+            parameters.add(new BasicNameValuePair("detail_code", mIncidentDetail));
+            parameters.add(new BasicNameValuePair("incident_time", mTime));
+            parameters.add(new BasicNameValuePair("incident_latitude", mLatitude));
+            parameters.add(new BasicNameValuePair("incident_longitude", mLongitude));
+
+            // getting JSON Object
+            // Note that create product url accepts POST method
+            JSONObject json = jsonParser.makeHttpRequest(url_save_report,
+                    "POST", parameters);
+
+            // check log cat fro response
+            Log.d("Create Response", json.toString());
+
+            // check for success tag
+            try {
+                int success = json.getInt(TAG_SUCCESS);
+
+                if (success == 1) {
+                    return true;
+                } else {
+                    // failed to create product
+                    return false;
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return true;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            //mAuthTask = null;
+            //showProgress(false);
+            pDialog.dismiss();
+            if (success) {
+                // successfully created product
+                //Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                //intent.putExtra(LoginActivity.NEW_USER, "Yes");
+                //intent.putExtra(LoginActivity.NEW_USER_MAIL, mEmail);
+                //startActivity(intent);
+                finish();
+            } else {
+                //mPasswordView.setError(getString(R.string.error_incorrect_password));
+                //mPasswordView.requestFocus();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            //mAuthTask = null;
+            //showProgress(false);
+        }
     }
 
 
