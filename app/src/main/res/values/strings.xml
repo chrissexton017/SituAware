@@ -5,14 +5,16 @@
     <string name="spinner_title">Select Category</string>
 
     <string-array name="incident_type_array">
-        <item>Accident</item>
+        <item>Accident/Hazard</item>
         <item>Anti-social Behaviour</item>
-        <item>Assault</item>
+        <item>Burglary/Property crime</item>
+        <item>Explosion/Bomb</item>
         <item>Fire</item>
-        <item>Pickpocketing</item>
+        <item>Suspicious behaviour</item>
         <item>Theft</item>
-        <item>Terrorist Attack</item>
         <item>Vandalism</item>
+        <item>Violence</item>
+        <item>Weapon related</item>
     </string-array>
 
     <string-array name="incident_detail_array">
@@ -26,6 +28,78 @@
         <item>Idiots</item>
     </string-array>
 
+    <string-array name="accident_detail_array">
+        <item>Chemical spill/leak</item>
+        <item>Dangerous animal loose</item>
+        <item>Gas leak</item>
+        <item>Traffic accident</item>
+        <item>Train accident</item>
+        <item>Zombie outbreak</item>
+    </string-array>
+
+    <string-array name="antisocial_detail_array">
+        <item>Drunk and disorderly</item>
+        <item>Hooliganism</item>
+        <item>Verbal abuse/threats</item>
+    </string-array>
+
+    <string-array name="burglary_detail_array">
+        <item>Attempted break-in</item>
+        <item>House break-in</item>
+        <item>Trespasser on property</item>
+    </string-array>
+
+    <string-array name="explosion_detail_array">
+        <item>Building exploded</item>
+        <item>Explosion in open public area</item>
+        <item>Heard but source unknown</item>
+        <item>Vehicle exploded</item>
+    </string-array>
+
+    <string-array name="fire_detail_array">
+        <item>Building on fire</item>
+        <item>Burning rubbish</item>
+        <item>Forest/grass fire</item>
+        <item>Junk yard/tire dump fire</item>
+        <item>Vehicle on fire</item>
+    </string-array>
+
+    <string-array name="suspicious_detail_array">
+        <item>Creeper/lurker</item>
+        <item>Harrassment</item>
+        <item>Stalker</item>
+    </string-array>
+
+    <string-array name="theft_detail_array">
+        <item>Bike theft</item>
+        <item>Car theft</item>
+        <item>Mugging</item>
+        <item>Pickpocketing</item>
+        <item>Shoplifting</item>
+    </string-array>
+
+    <string-array name="vandalism_detail_array">
+        <item>Destroying property</item>
+        <item>Graffiti</item>
+        <item>Smashing windows</item>
+        <item>Stone throwing</item>
+    </string-array>
+
+    <string-array name="violence_detail_array">
+        <item>Fight/brawl</item>
+        <item>Murder</item>
+        <item>Shooting</item>
+        <item>Stabbing</item>
+        <item>Violent assault/battery</item>
+    </string-array>
+
+    <string-array name="weapon_detail_array">
+        <item>Gun shots heard</item>
+        <item>Person with gun</item>
+        <item>Person with knife</item>
+    </string-array>
+
+
     <string-array name="incident_time_array">
         <item>Happening now</item>
         <item>Happened earlier (choose time)</item>
@@ -35,6 +109,7 @@
         <item>My current location</item>
         <item>Another place (choose location)</item>
     </string-array>
+    <string name="title_activity_tracking">Map</string>
 
 
 </resources>

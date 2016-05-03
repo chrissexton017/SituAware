@@ -20,9 +20,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+
+import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.List;
 import android.app.Activity;
 import android.os.Bundle;
@@ -64,7 +67,9 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     String mLongitude;
     String mIncidentCode;
     String mIncidentDetail;
-    String mTime;
+    String mTime = "CURRENT_TIMESTAMP";
+    java.sql.Timestamp qTime;
+
     Long time;
     // Progress Dialog
     private ProgressDialog pDialog;
@@ -73,6 +78,8 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     private Spinner mSpinner2;
     private Spinner mSpinner3;
     private Spinner mSpinner4;
+
+    private HashMap<Integer, Integer> spinnerMap = new HashMap<>();
 
     // JSON parser class
     JSONParser jsonParser = new JSONParser();
@@ -119,7 +126,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         mSpinner2 = (Spinner)findViewById(R.id.spinner2);
         mSpinner2.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinner2Adapter = ArrayAdapter.createFromResource(this,
-                R.array.incident_detail_array, R.layout.spinner_item);
+                R.array.accident_detail_array, R.layout.spinner_item);
         mSpinner2.setAdapter(spinner2Adapter);
         mSpinner3 = (Spinner)findViewById(R.id.spinner3);
         mSpinner3.setOnItemSelectedListener(this);
@@ -132,6 +139,16 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         mSpinner4.setAdapter(spinner4Adapter);
         mSpinner4.setOnItemSelectedListener(this);
 
+        spinnerMap.put(0, R.array.accident_detail_array);
+        spinnerMap.put(1, R.array.antisocial_detail_array);
+        spinnerMap.put(2, R.array.burglary_detail_array);
+        spinnerMap.put(3, R.array.explosion_detail_array);
+        spinnerMap.put(4, R.array.fire_detail_array);
+        spinnerMap.put(5, R.array.suspicious_detail_array);
+        spinnerMap.put(6, R.array.theft_detail_array);
+        spinnerMap.put(7, R.array.vandalism_detail_array);
+        spinnerMap.put(8, R.array.violence_detail_array);
+        spinnerMap.put(9, R.array.weapon_detail_array);
     }
 
     @Override
@@ -224,6 +241,11 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         // On selecting a spinner item
         String item = parent.getItemAtPosition(position).toString();
+        if(parent == mSpinner) {
+            ArrayAdapter<CharSequence> spinner2Adapter = ArrayAdapter.createFromResource(this,
+                    spinnerMap.get(mSpinner.getSelectedItemPosition()), R.layout.spinner_item);
+            mSpinner2.setAdapter(spinner2Adapter);
+        }
         if(item.equals("Happened earlier (choose time)")) {
             final View dialogView = View.inflate(this, R.layout.date_time_picker, null);
             final AlertDialog alertDialog = new AlertDialog.Builder(this).create();
@@ -242,15 +264,14 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                             timePicker.getCurrentMinute());
 
                     time = calendar.getTimeInMillis();
+                    qTime = new java.sql.Timestamp(calendar.getTimeInMillis());
+                    mTime = "'"+qTime.toString()+"'";
                     alertDialog.dismiss();
                 }});
             alertDialog.setView(dialogView);
             alertDialog.show();
 
         }
-        // Showing selected spinner item
-        Toast.makeText(parent.getContext(), "Selected: " + item, Toast.LENGTH_LONG).show();
-
     }
 
     public void onNothingSelected(AdapterView<?> arg0) {
@@ -261,7 +282,6 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     public void submitReport(View view) {
         mIncidentCode = String.valueOf(mSpinner.getSelectedItemPosition()+1);
         mIncidentDetail = String.valueOf(mSpinner2.getSelectedItemPosition()+1);
-        mTime = "CURRENT_TIMESTAMP";
         AlertDialog.Builder alert = new AlertDialog.Builder(
                 this);
         alert.setTitle("Submit report?");

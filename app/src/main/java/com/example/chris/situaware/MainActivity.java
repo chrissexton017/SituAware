@@ -59,6 +59,8 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 } else if (position == 1) {
                     //open activity for tracking
+                    Intent intent = new Intent(mContext, TrackingActivity.class);
+                    startActivity(intent);
 
                 }
 
