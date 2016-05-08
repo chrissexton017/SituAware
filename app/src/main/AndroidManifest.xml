@@ -51,7 +51,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".TrackActivity"
+            android:name=".TrackingActivity"
             android:label="@string/title_activity_track"></activity>
     </application>
 
