@@ -24,6 +24,8 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         mapFragment.getMapAsync(this);
     }
 
+    //this is added just to make a change so that commit occurs
+
 
     /**
      * Manipulates the map once available.

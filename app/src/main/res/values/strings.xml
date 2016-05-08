@@ -100,6 +100,7 @@
     </string-array>
 
 
+
     <string-array name="incident_time_array">
         <item>Happening now</item>
         <item>Happened earlier (choose time)</item>
@@ -109,7 +110,6 @@
         <item>My current location</item>
         <item>Another place (choose location)</item>
     </string-array>
-    <string name="title_activity_tracking">Map</string>
 
 
 </resources>
