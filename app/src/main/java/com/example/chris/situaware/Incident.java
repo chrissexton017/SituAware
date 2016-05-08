@@ -22,8 +22,8 @@ public class Incident {
         this.longitude = lon;
     }
 
-    public String getIncidentType() {
-        return "Theft";
+    public int getIncidentType() {
+        return incidentCode;
     }
 
     public String getIncidentDetail() {

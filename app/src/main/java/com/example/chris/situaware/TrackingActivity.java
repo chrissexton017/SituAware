@@ -32,6 +32,8 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
     Incident[] incidents;
 
+    String[] incidentTypes;
+
     // url to save report
     private static final String url_get_incidents = "http://10.0.2.2:80//situaware/get_all_incidents.php";
 
@@ -49,7 +51,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
+        incidentTypes = getResources().getStringArray(R.array.incident_type_array);
     }
 
 
@@ -67,9 +69,9 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        LatLng kstad = new LatLng(56, 14);
+        mMap.addMarker(new MarkerOptions().position(kstad).title("Marker in Kristianstad"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(kstad));
         new LoadAllIncidents().execute();
     }
 
@@ -107,6 +109,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                     // Getting Array of Products
                     parsedIncidents = json.getJSONArray(TAG_INCIDENTS);
                     incidents = new Incident[parsedIncidents.length()];
+                    System.out.println("INCIDENTS: "+incidents.length);
                     // looping through All Products
                     for (int i = 0; i < parsedIncidents.length(); i++) {
                         JSONObject c = parsedIncidents.getJSONObject(i);
@@ -118,9 +121,9 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                         int incidentCode = c.getInt("incident_code");
                         int incidentDetail = c.getInt("detail_code");
                         String time = c.getString("incident_time");
-                        String latitude = String.valueOf(c.getLong("incident_latitude"));
-                        String longitude = String.valueOf(c.getLong("incident_longitude"));
-
+                        String latitude = c.getString("incident_latitude");
+                        String longitude = c.getString("incident_longitude");
+                        System.out.println("LAT = "+latitude);
                         Incident inc = new Incident(incidentCode, incidentDetail, time, latitude, longitude);
                         incidents[i] = inc;
 
@@ -152,8 +155,11 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         protected void onPostExecute(String file_url) {
             // dismiss the dialog after getting all products
             // Add a marker in Sydney and move the camera
-            LatLng hkr = new LatLng(Double.valueOf(incidents[0].getLatitude()), Double.valueOf(incidents[0].getLongitude()));
-            mMap.addMarker(new MarkerOptions().position(hkr).title(incidents[0].getIncidentType()));
+            for(Incident i: incidents){
+                LatLng ltlng = new LatLng(Double.valueOf(i.getLatitude()), Double.valueOf(i.getLongitude()));
+                mMap.addMarker(new MarkerOptions().position(ltlng).title(incidentTypes[i.getIncidentType()]));
+            }
+
 
         }
 
