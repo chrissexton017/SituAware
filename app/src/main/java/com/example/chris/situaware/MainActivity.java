@@ -59,7 +59,8 @@ public class MainActivity extends AppCompatActivity {
                     startActivity(intent);
                 } else if (position == 1) {
                     //open activity for tracking
-
+                    Intent intent = new Intent(mContext, TrackActivity.class);
+                    startActivity(intent);
                 }
 
             }
@@ -127,15 +128,29 @@ public class MainActivity extends AppCompatActivity {
             //sets ImageButton (with id "imageButton" in grid_item.xml) to the image at mThumbIds[position]
             ImageButton imageButton = (ImageButton)grid.findViewById(R.id.imageButton);
             imageButton.setImageResource(mThumbIds[position]);
-            imageButton.setOnClickListener(new View.OnClickListener() {
+            if(position == 0) {
+                imageButton.setOnClickListener(new View.OnClickListener() {
 
-                @Override
-                public void onClick(View arg0) {
-                    Intent intent = new Intent(mContext, ReportIncidentActivity.class);
-                    startActivity(intent);
-                }
+                    @Override
+                    public void onClick(View arg0) {
+                        Intent intent = new Intent(mContext, ReportIncidentActivity.class);
+                        startActivity(intent);
+                    }
 
-            });
+                });
+            }
+            if(position == 1) {
+                imageButton.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View arg0) {
+                        Intent intent = new Intent(mContext, TrackActivity.class);
+                        startActivity(intent);
+                    }
+
+                });
+            }
+
 
             return grid;
         }

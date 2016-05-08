@@ -285,7 +285,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         AlertDialog.Builder alert = new AlertDialog.Builder(
                 this);
         alert.setTitle("Submit report?");
-        alert.setMessage("Are you sure you want to submit this incident report?");
+        alert.setMessage("Are you sure you want to submit this incident report? /n "+mLatitude+"/n"+mLongitude);
         alert.setPositiveButton("YES", new DialogInterface.OnClickListener() {
 
             @Override

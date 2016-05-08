@@ -1,0 +1,21 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    https://console.developers.google.com/flows/enableapi?apiid=maps_android_backend&keyType=CLIENT_SIDE_ANDROID&r=67:CE:20:99:9D:AC:AD:97:4E:96:F2:C4:08:EE:11:20:F1:E1:46:D9%3Bcom.example.chris.situaware
+
+    You can also add your credentials to an existing key, using this line:
+    67:CE:20:99:9D:AC:AD:97:4E:96:F2:C4:08:EE:11:20:F1:E1:46:D9;com.example.chris.situaware
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
+        AIzaSyAKtZP4-Z_ZRjKi10isBKO6U_YZ95aaPps
+    </string>
+</resources>
