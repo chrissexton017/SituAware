@@ -34,6 +34,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
     String[] incidentTypes;
 
+
     // url to save report
     private static final String url_get_incidents = "http://10.0.2.2:80//situaware/get_all_incidents.php";
 
