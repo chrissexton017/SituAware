@@ -63,8 +63,12 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     String[] spinners = {"Incident", "Incident Detail", "Time", "Place", "Ongoing"};
     GoogleApiClient mGoogleApiClient;
     Location mLastLocation;
-    String mLatitude;
-    String mLongitude;
+    String mLatitude = "";
+    String mLongitude = "";
+
+    String simulatedLat = String.valueOf(56.048495);
+    String simulatedLong = String.valueOf(14.147706);
+
     String mIncidentCode;
     String mIncidentDetail;
     String mTime = "CURRENT_TIMESTAMP";
@@ -85,10 +89,12 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     JSONParser jsonParser = new JSONParser();
 
     // url to save report
-    private static final String url_save_report = "http://10.0.2.2:80//situaware/save_incident_report.php";
+    private static final String url_save_report = "http://10.0.2.2:8080//situaware/save_incident_report.php";
 
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -282,10 +288,15 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     public void submitReport(View view) {
         mIncidentCode = String.valueOf(mSpinner.getSelectedItemPosition()+1);
         mIncidentDetail = String.valueOf(mSpinner2.getSelectedItemPosition()+1);
+        if(mLatitude.isEmpty()) {
+            System.out.println("SIMULATING LOCATION");
+            mLatitude = simulatedLat;
+            mLongitude = simulatedLong;
+        }
         AlertDialog.Builder alert = new AlertDialog.Builder(
                 this);
         alert.setTitle("Submit report?");
-        alert.setMessage("Are you sure you want to submit this incident report? /n "+mLatitude+"/n"+mLongitude);
+        alert.setMessage("Are you sure you want to submit this incident report? \n"+mLatitude+"\n"+mLongitude);
         alert.setPositiveButton("YES", new DialogInterface.OnClickListener() {
 
             @Override
