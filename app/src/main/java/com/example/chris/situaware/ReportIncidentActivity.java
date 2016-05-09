@@ -89,7 +89,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     JSONParser jsonParser = new JSONParser();
 
     // url to save report
-    private static final String url_save_report = "http://10.0.2.2:8080//situaware/save_incident_report.php";
+    private static final String url_save_report = "http://10.0.2.2:80//situaware/save_incident_report.php";
 
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
