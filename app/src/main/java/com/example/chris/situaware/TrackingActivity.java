@@ -1,6 +1,7 @@
 package com.example.chris.situaware;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -34,7 +36,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
     String[] incidentTypes;
 
-
+    Context mContext;
     // url to save report
     private static final String url_get_incidents = "http://kodstack.com/situaware/get_all_incidents.php";
 
@@ -52,6 +54,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+        mContext = this;
         incidentTypes = getResources().getStringArray(R.array.incident_type_array);
     }
 
@@ -70,9 +73,15 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         mMap = googleMap;
 
         // Add a marker in Sydney and move the camera
-        LatLng kstad = new LatLng(56, 14);
-        mMap.addMarker(new MarkerOptions().position(kstad).title("Marker in Kristianstad"));
+        LatLng kstad = new LatLng(56.048495, 14.147706);
+        float f = (float)10.0;
+        mMap.addMarker(new MarkerOptions()
+                .position(kstad)
+                .title("Your present location")
+                .snippet("You are here")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(kstad));
+        mMap.moveCamera((CameraUpdateFactory.zoomTo(f)));
         new LoadAllIncidents().execute();
     }
 
@@ -125,7 +134,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                         String latitude = c.getString("incident_latitude");
                         String longitude = c.getString("incident_longitude");
                         System.out.println("LAT = "+latitude);
-                        Incident inc = new Incident(incidentCode, incidentDetail, time, latitude, longitude);
+                        Incident inc = new Incident(incidentCode, incidentDetail, time, latitude, longitude, mContext);
                         incidents[i] = inc;
 
                         // creating new HashMap
@@ -158,7 +167,10 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
             // Add a marker in Sydney and move the camera
             for(Incident i: incidents){
                 LatLng ltlng = new LatLng(Double.valueOf(i.getLatitude()), Double.valueOf(i.getLongitude()));
-                mMap.addMarker(new MarkerOptions().position(ltlng).title(incidentTypes[i.getIncidentType()]));
+                mMap.addMarker(new MarkerOptions()
+                        .position(ltlng)
+                        .title(incidentTypes[i.getIncidentType()])
+                        .snippet(i.getIncidentDetail()));
             }
 
 
