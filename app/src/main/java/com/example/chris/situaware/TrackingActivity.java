@@ -36,7 +36,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
 
     // url to save report
-    private static final String url_get_incidents = "http://10.0.2.2:80//situaware/get_all_incidents.php";
+    private static final String url_get_incidents = "http://kodstack.com/situaware/get_all_incidents.php";
 
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
