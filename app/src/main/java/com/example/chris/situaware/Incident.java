@@ -68,6 +68,10 @@ public class Incident {
         else if(incidentCode==10) {
             details = mContext.getResources().getStringArray(R.array.weapon_detail_array);
         }
+        else if(incidentCode==11) {
+            String[] strarr = {"first val", mContext.getString(R.string.app_name)};
+            details = strarr;
+        }
         return details[detailCode-1];
     }
 
