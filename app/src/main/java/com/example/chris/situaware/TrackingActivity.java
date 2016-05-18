@@ -1,14 +1,23 @@
 package com.example.chris.situaware;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -18,6 +27,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.apache.http.NameValuePair;
@@ -25,9 +35,11 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class TrackingActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -50,6 +62,14 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
     //mode for map: tracking or location picking
     public static String MODE="Track";
 
+    LocationListener mLocationListener;
+    LocationManager mLocationManager;
+    Location mLastLocation;
+    String mLatitude = "";
+    String mLongitude = "";
+    MarkerOptions mPosition;
+    Marker mMarker;
+
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
     private static final String TAG_INCIDENTS = "incidents";
@@ -61,8 +81,35 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track);
         if(getIntent().hasExtra(MODE)) {
-            System.out.println("I AM FUCKING HERE");
             MODE="pick";
+        }
+        //Create a location manager
+        mLocationManager = (LocationManager)
+                getSystemService(Context.LOCATION_SERVICE);
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(TrackingActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // No explanation needed, we can request the permission.
+
+            ActivityCompat.requestPermissions(TrackingActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+
+        }
+
+        try {
+            mLocationListener = new MyLocationListener();
+            mLocationManager.requestLocationUpdates(
+                    LocationManager.GPS_PROVIDER, 5000, 10, mLocationListener);
+        }catch(SecurityException ex) {
+
         }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -70,6 +117,43 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         mapFragment.getMapAsync(this);
         mContext = this;
         incidentTypes = getResources().getStringArray(R.array.incident_type_array);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        mLocationListener = new MyLocationListener();
+                        mLocationManager.requestLocationUpdates(
+                                LocationManager.GPS_PROVIDER, 5000, 10, mLocationListener);
+                        mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+                        if (mLastLocation != null) {
+                            mLatitude = String.valueOf(mLastLocation.getLatitude());
+                            mLongitude = String.valueOf(mLastLocation.getLongitude());
+                        }
+                    }catch(SecurityException ex) {
+                        System.out.println("SECURITY EXCEPTION 2" + ex.toString());
+                    }
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
 
@@ -94,11 +178,12 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         String lon = sharedPref.getString("LastLongitude", String.valueOf(14.147706));
         LatLng myLoc = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
         float f = (float)10.0;
-        mMap.addMarker(new MarkerOptions()
+        mPosition = new MarkerOptions()
                 .position(myLoc)
                 .title("Your present location")
                 .snippet("You are here")
-                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        mMarker = mMap.addMarker(mPosition);
         mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
         mMap.moveCamera((CameraUpdateFactory.zoomTo(f)));
         if(MODE!="pick") {
@@ -233,4 +318,62 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         }
 
     }
+
+    class MyLocationListener implements LocationListener {
+
+        @Override
+        public void onLocationChanged(Location loc) {
+            //editLocation.setText("");
+            //pb.setVisibility(View.INVISIBLE);
+            Toast.makeText(
+                    getBaseContext(),
+                    "Location changed: Lat: " + loc.getLatitude() + " Lng: "
+                            + loc.getLongitude(), Toast.LENGTH_SHORT).show();
+            String longitude = "Longitude: " + loc.getLongitude();
+            //Log.v(TAG, longitude);
+            String latitude = "Latitude: " + loc.getLatitude();
+            //Log.v(TAG, latitude);
+
+            LatLng myLoc = new LatLng(loc.getLatitude(), loc.getLongitude());
+            mMarker.remove();
+            float f = (float)10.0;
+            mPosition = new MarkerOptions()
+                    .position(myLoc)
+                    .title("Your present location")
+                    .snippet("You are here")
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+            mMarker = mMap.addMarker(mPosition);
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
+            mMap.moveCamera((CameraUpdateFactory.zoomTo(f)));
+
+        /*------- To get city name from coordinates -------- */
+            String cityName = null;
+            Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
+            List<Address> addresses;
+            try {
+                addresses = gcd.getFromLocation(loc.getLatitude(),
+                        loc.getLongitude(), 1);
+                if (addresses.size() > 0) {
+                    System.out.println(addresses.get(0).getLocality());
+                    cityName = addresses.get(0).getLocality();
+                }
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+            String s = longitude + "\n" + latitude + "\n\nMy Current City is: "
+                    + cityName;
+            // editLocation.setText(s);
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {}
+
+        @Override
+        public void onProviderEnabled(String provider) {}
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {}
+    }
+
 }
