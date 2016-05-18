@@ -1,9 +1,16 @@
 package com.example.chris.situaware;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
@@ -17,6 +24,11 @@ import android.widget.GridView;
 import android.widget.ImageButton;
 
 public class MainActivity extends AppCompatActivity {
+
+    LocationManager mLocationManager;
+    Location mLastLocation;
+
+    private final String SHARED_PREFERENCES_NAME = "ourPrefs";
 
     private Integer[] mThumbIds = {
             R.drawable.reportbutton,
@@ -40,6 +52,36 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         fab.hide();
+
+        //Create a location manager
+        mLocationManager = (LocationManager)
+                getSystemService(Context.LOCATION_SERVICE);
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // No explanation needed, we can request the permission.
+
+            ActivityCompat.requestPermissions(MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+
+            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+            // app-defined int constant. The callback method gets the
+            // result of the request.
+
+        } else {
+            mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+            if (mLastLocation != null) {
+                SharedPreferences sharedPref = MainActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("LastLatitude", String.valueOf(mLastLocation.getLatitude()));
+                editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
+                editor.commit();
+            }
+        }
 
         final GridView gridview = (GridView) findViewById(R.id.gridview);
         //set the grid view's adapter as a new instance of custom MyAdapter class
@@ -84,6 +126,43 @@ public class MainActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+                        if (mLastLocation != null) {
+                            SharedPreferences sharedPref = MainActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sharedPref.edit();
+                            editor.putString("LastLatitude", String.valueOf(mLastLocation.getLatitude()));
+                            editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
+                            editor.commit();
+                        }
+                    }catch(SecurityException ex) {
+                        System.out.println("SECURITY EXCEPTION 2" + ex.toString());
+                    }
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
 

@@ -1,5 +1,6 @@
 package com.example.chris.situaware;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -98,7 +99,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     JSONParser jsonParser = new JSONParser();
 
     // url to save report
-    private static final String url_save_report = "http://kodstack.com/situaware/save_incident_report.php";
+    private static final String url_save_report = "http://situaware.kodstack.com/save_incident_report.php";
 
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
@@ -118,12 +119,29 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         }
 
         //Create a location manager
-        LocationManager locationManager = (LocationManager)
+        mLocationManager = (LocationManager)
                 getSystemService(Context.LOCATION_SERVICE);
+
+        // Here, thisActivity is the current activity
+        if (ContextCompat.checkSelfPermission(ReportIncidentActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(ReportIncidentActivity.this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        1);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+
+        }
 
         try {
             mLocationListener = new MyLocationListener();
-            locationManager.requestLocationUpdates(
+            mLocationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER, 5000, 10, mLocationListener);
         }catch(SecurityException ex) {
 
@@ -199,11 +217,52 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 mLatitude = String.valueOf(mLastLocation.getLatitude());
                 mLongitude = String.valueOf(mLastLocation.getLongitude());
             }
-           // mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+           mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+            if (mLastLocation != null) {
+                mLatitude = String.valueOf(mLastLocation.getLatitude());
+                mLongitude = String.valueOf(mLastLocation.getLongitude());
+            }
         } catch(SecurityException ex) {
-            System.out.println("SECURITY EXCEPTION");
+            System.out.println("SECURITY EXCEPTION" + ex.toString());
         }
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    try {
+                        mLocationListener = new MyLocationListener();
+                        mLocationManager.requestLocationUpdates(
+                                LocationManager.GPS_PROVIDER, 5000, 10, mLocationListener);
+                        mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+                        if (mLastLocation != null) {
+                            mLatitude = String.valueOf(mLastLocation.getLatitude());
+                            mLongitude = String.valueOf(mLastLocation.getLongitude());
+                        }
+                    }catch(SecurityException ex) {
+                        System.out.println("SECURITY EXCEPTION 2" + ex.toString());
+                    }
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     @Override
@@ -300,11 +359,31 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
             alertDialog.show();
 
         }
+        if(item.equals("Another place (choose location)")) {
+            Intent i = new Intent(this,  TrackingActivity.class);
+            i.putExtra(TrackingActivity.MODE, "pick");
+            startActivityForResult(i, 1);
+        }
     }
 
     public void onNothingSelected(AdapterView<?> arg0) {
         // TODO Auto-generated method stub
 
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1) {
+            if(resultCode == RESULT_OK){
+                String loc=data.getStringExtra("pickedloc");
+                String location = loc.substring(10, loc.length()-1);
+                mSpinner4.setPrompt(loc);
+                String[] latlong = location.split(",");
+                mLatitude = latlong[0];
+                mLongitude = latlong[1];
+                System.out.println("PICKED LOCATION: "+location);
+            }
+        }
     }
 
     public void submitReport(View view) {

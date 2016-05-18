@@ -1,11 +1,16 @@
 package com.example.chris.situaware;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -26,6 +31,8 @@ import java.util.List;
 
 public class TrackingActivity extends FragmentActivity implements OnMapReadyCallback {
 
+    private final String SHARED_PREFERENCES_NAME = "ourPrefs";
+
     // JSON parser class
     JSONParser jsonParser = new JSONParser();
 
@@ -38,7 +45,10 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
     Context mContext;
     // url to save report
-    private static final String url_get_incidents = "http://kodstack.com/situaware/get_all_incidents.php";
+    private static final String url_get_incidents = "http://situaware.kodstack.com/get_all_incidents.php";
+
+    //mode for map: tracking or location picking
+    public static String MODE="Track";
 
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
@@ -50,6 +60,10 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_track);
+        if(getIntent().hasExtra(MODE)) {
+            System.out.println("I AM FUCKING HERE");
+            MODE="pick";
+        }
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -71,18 +85,60 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
         // Add a marker in Sydney and move the camera
-        LatLng kstad = new LatLng(56.048495, 14.147706);
+        SharedPreferences sharedPref = TrackingActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+        if(sharedPref.contains("LastLatitude")) {
+            System.out.println(sharedPref.getString("LastLatitude", "DIABOLICAL"));
+        }
+        String lat = sharedPref.getString("LastLatitude", String.valueOf(56.048495));
+        String lon = sharedPref.getString("LastLongitude", String.valueOf(14.147706));
+        LatLng myLoc = new LatLng(Double.parseDouble(lat), Double.parseDouble(lon));
         float f = (float)10.0;
         mMap.addMarker(new MarkerOptions()
-                .position(kstad)
+                .position(myLoc)
                 .title("Your present location")
                 .snippet("You are here")
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(kstad));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
         mMap.moveCamera((CameraUpdateFactory.zoomTo(f)));
-        new LoadAllIncidents().execute();
+        if(MODE!="pick") {
+            new LoadAllIncidents().execute();
+        }
+        else{
+            mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+
+                @Override
+                public void onMapClick(LatLng point) {
+                    Toast.makeText(getApplicationContext(), point.toString(), Toast.LENGTH_SHORT).show();
+                    final LatLng pt = point;
+                    AlertDialog.Builder alert = new AlertDialog.Builder(
+                            mContext);
+                    alert.setTitle("Confirm location");
+                    alert.setMessage("Is " + point.toString() + " where the incident occured?");
+                    alert.setPositiveButton("YES", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent();
+                            intent.putExtra("pickedloc", pt.toString());
+                            setResult(RESULT_OK, intent);
+                            finish();
+                            dialog.dismiss();
+
+                        }
+                    });
+                    alert.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+
+                            dialog.dismiss();
+                        }
+                    });
+                    alert.show();
+                }
+            });
+        }
     }
 
 
