@@ -88,6 +88,15 @@
         android:gravity="right"
         />
 
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dip"
+        android:text="Incident Type:"
+        android:layout_marginBottom="5dp"
+        />
+
     <Button
         android:id="@+id/register_button"
         style="?android:textAppearanceSmall"

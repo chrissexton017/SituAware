@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -87,7 +88,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
 
     LocationListener mLocationListener;
     LocationManager mLocationManager;
-
+    private TextView mLocationTextView;
     private Spinner mSpinner;
     private Spinner mSpinner2;
     private Spinner mSpinner3;
@@ -103,6 +104,8 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
 
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
+
+    private final String SHARED_PREFERENCES_NAME = "ourPrefs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -137,6 +140,17 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 // app-defined int constant. The callback method gets the
                 // result of the request.
 
+        } else{
+            mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+            if (mLastLocation != null) {
+                mLatitude = String.valueOf(mLastLocation.getLatitude());
+                mLongitude = String.valueOf(mLastLocation.getLongitude());
+                SharedPreferences sharedPref = ReportIncidentActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("LastLatitude", String.valueOf(mLastLocation.getLatitude()));
+                editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
+                editor.commit();
+            }
         }
 
         try {
@@ -163,6 +177,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         fab.hide();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
+        mLocationTextView = (TextView)findViewById(R.id.textView5);
         mSpinner = (Spinner)findViewById(R.id.spinner);
         mSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(this,
@@ -200,6 +215,23 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     protected void onStart() {
         mGoogleApiClient.connect();
         super.onStart();
+        String cityName = null;
+        Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
+        List<Address> addresses;
+        try {
+            addresses = gcd.getFromLocation(Double.parseDouble(mLatitude),
+                    Double.parseDouble(mLongitude), 1);
+            if (addresses.size() > 0) {
+                System.out.println(addresses.get(0).getLocality());
+                cityName = addresses.get(0).getLocality();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        String s = mLatitude + "\n" + mLongitude + "\n\nMy Current City is: "
+                + cityName;
+        mLocationTextView.setText(s);
     }
 
     @Override
@@ -364,6 +396,10 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
             i.putExtra(TrackingActivity.MODE, "pick");
             startActivityForResult(i, 1);
         }
+        if(item.equals("My current location")) {
+            //TO DO: set the display back to current location
+            //at the moment MLat and MLong are getting modified
+        }
     }
 
     public void onNothingSelected(AdapterView<?> arg0) {
@@ -382,6 +418,24 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 mLatitude = latlong[0];
                 mLongitude = latlong[1];
                 System.out.println("PICKED LOCATION: "+location);
+                //convert co-ords to city name
+                String cityName = null;
+                Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
+                List<Address> addresses;
+                try {
+                    addresses = gcd.getFromLocation(Double.parseDouble(mLatitude),
+                            Double.parseDouble(mLongitude), 1);
+                    if (addresses.size() > 0) {
+                        System.out.println(addresses.get(0).getLocality());
+                        cityName = addresses.get(0).getLocality();
+                    }
+                }
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+                String s = mLatitude + "\n" + mLongitude + "\n\nMy Current City is: "
+                        + cityName;
+                mLocationTextView.setText(s);
             }
         }
     }

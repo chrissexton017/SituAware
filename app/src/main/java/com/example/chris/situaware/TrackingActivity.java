@@ -102,6 +102,15 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
             // app-defined int constant. The callback method gets the
             // result of the request.
 
+        } else{
+            mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
+            if (mLastLocation != null) {
+                SharedPreferences sharedPref = TrackingActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("LastLatitude", String.valueOf(mLastLocation.getLatitude()));
+                editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
+                editor.commit();
+            }
         }
 
         try {
