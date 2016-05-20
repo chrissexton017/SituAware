@@ -15,6 +15,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -63,6 +64,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     String mIncidentDetail;
     String mTime = "CURRENT_TIMESTAMP";
     java.sql.Timestamp qTime;
+    private String ANDROID_ID = "test";
 
     Long time;
     // Progress Dialog
@@ -94,6 +96,10 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_report_incident);
         mLocationTextView = (TextView)findViewById(R.id.textView5);
+
+        if(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)!=null) {
+            ANDROID_ID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        }
 
         /* Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
@@ -442,7 +448,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
             parameters.add(new BasicNameValuePair("incident_time", mTime));
             parameters.add(new BasicNameValuePair("incident_latitude", mLatitude));
             parameters.add(new BasicNameValuePair("incident_longitude", mLongitude));
-
+            parameters.add(new BasicNameValuePair("android_id", ANDROID_ID));
             // getting JSON Object
             // Note that create product url accepts POST method
             JSONObject json = jsonParser.makeHttpRequest(url_save_report,
