@@ -15,6 +15,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -22,13 +23,10 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import java.io.IOException;
-import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -36,15 +34,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
-import android.app.Activity;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.DatePicker;
-import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -52,15 +43,7 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStates;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
 
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
@@ -75,12 +58,13 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     String mLatitude = "";
     String mLongitude = "";
     //for emulator use
-    String simulatedLat = String.valueOf(56.048495);
-    String simulatedLong = String.valueOf(14.147706);
+    String dummyLat = String.valueOf(56.048495);
+    String dummyLong = String.valueOf(14.147706);
     String mIncidentCode;
     String mIncidentDetail;
     String mTime = "CURRENT_TIMESTAMP";
     java.sql.Timestamp qTime;
+    private String ANDROID_ID = "test";
 
     Long time;
     // Progress Dialog
@@ -111,48 +95,50 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_report_incident);
+        mLocationTextView = (TextView)findViewById(R.id.textView5);
 
-        // Create an instance of GoogleAPIClient.
+        if(Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID)!=null) {
+            ANDROID_ID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        }
+
+        /* Create an instance of GoogleAPIClient.
         if (mGoogleApiClient == null) {
             mGoogleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .addApi(LocationServices.API)
                     .build();
-        }
+        }*/
 
-        //Create a location manager
+        //Create a location manager for this activity
         mLocationManager = (LocationManager)
                 getSystemService(Context.LOCATION_SERVICE);
 
-        // Here, thisActivity is the current activity
+        // We will check again if access fine location permission has been granted (should have been during MainActivity).
+        // If not, ask again.
         if (ContextCompat.checkSelfPermission(ReportIncidentActivity.this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
-                // No explanation needed, we can request the permission.
-
                 ActivityCompat.requestPermissions(ReportIncidentActivity.this,
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         1);
 
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
+                //result of permissions request handled below in onRequestPermissionResult
 
         } else{
+        //permission has been granted (should test true in majority of cases)
+        // get current location and display it in incident location text view as default
             mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
             if (mLastLocation != null) {
                 mLatitude = String.valueOf(mLastLocation.getLatitude());
                 mLongitude = String.valueOf(mLastLocation.getLongitude());
-                SharedPreferences sharedPref = ReportIncidentActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
-                SharedPreferences.Editor editor = sharedPref.edit();
-                editor.putString("LastLatitude", String.valueOf(mLastLocation.getLatitude()));
-                editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
-                editor.commit();
+                mLocationTextView.setText(getCityFromCoordinates(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
+            }
+            else{
+                //LOCATION CAME BACK NULL: TRY SharedPreferences
             }
         }
-
+        //if permission has been granted this should work
         try {
             mLocationListener = new MyLocationListener();
             mLocationManager.requestLocationUpdates(
@@ -160,8 +146,6 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         }catch(SecurityException ex) {
 
         }
-
-
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -177,7 +161,6 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         fab.hide();
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mLocationTextView = (TextView)findViewById(R.id.textView5);
         mSpinner = (Spinner)findViewById(R.id.spinner);
         mSpinner.setOnItemSelectedListener(this);
         ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(this,
@@ -213,7 +196,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
 
     @Override
     protected void onStart() {
-        mGoogleApiClient.connect();
+        //mGoogleApiClient.connect();
         super.onStart();
         String cityName = null;
         Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
@@ -236,28 +219,20 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
 
     @Override
     protected void onStop() {
-        mGoogleApiClient.disconnect();
+       // mGoogleApiClient.disconnect();
         super.onStop();
     }
 
     @Override
     public void onConnected(Bundle connectionHint) {
-        try{
+        /*try{
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                     mGoogleApiClient);
             if (mLastLocation != null) {
                 mLatitude = String.valueOf(mLastLocation.getLatitude());
                 mLongitude = String.valueOf(mLastLocation.getLongitude());
             }
-           mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
-            if (mLastLocation != null) {
-                mLatitude = String.valueOf(mLastLocation.getLatitude());
-                mLongitude = String.valueOf(mLastLocation.getLongitude());
-            }
-        } catch(SecurityException ex) {
-            System.out.println("SECURITY EXCEPTION" + ex.toString());
-        }
-
+       */
     }
 
     @Override
@@ -276,6 +251,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                         if (mLastLocation != null) {
                             mLatitude = String.valueOf(mLastLocation.getLatitude());
                             mLongitude = String.valueOf(mLastLocation.getLongitude());
+                            mLocationTextView.setText(getCityFromCoordinates(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
                         }
                     }catch(SecurityException ex) {
                         System.out.println("SECURITY EXCEPTION 2" + ex.toString());
@@ -309,52 +285,6 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         mLongitude = String.valueOf(14.147706);
     }
 
-    /*protected void createLocationRequest() {
-        LocationRequest mLocationRequest = new LocationRequest();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
-                .addLocationRequest(mLocationRequest);
-
-        PendingResult<LocationSettingsResult> result =
-                LocationServices.SettingsApi.checkLocationSettings(mGoogleClient,
-                        builder.build());
-
-        result.setResultCallback(new ResultCallback<LocationSettingsResult>()) {
-            @Override
-            public void onResult(LocationSettingsResult result) {
-                final Status status = result.getStatus();
-                final LocationSettingsStates= result.getLocationSettingsStates();
-                switch (status.getStatusCode()) {
-                    case LocationSettingsStatusCodes.SUCCESS:
-                        // All location settings are satisfied. The client can
-                        // initialize location requests here.
-                        ...
-                        break;
-                    case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
-                        // Location settings are not satisfied, but this can be fixed
-                        // by showing the user a dialog.
-                        try {
-                            // Show the dialog by calling startResolutionForResult(),
-                            // and check the result in onActivityResult().
-                            status.startResolutionForResult(
-                                    OuterClass.this,
-                                    REQUEST_CHECK_SETTINGS);
-                        } catch (SendIntentException e) {
-                            // Ignore the error.
-                        }
-                        break;
-                    case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
-                        // Location settings are not satisfied. However, we have no way
-                        // to fix the settings so we won't show the dialog.
-                        ...
-                        break;
-                }
-            }
-        });
-    }*/
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -397,8 +327,9 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
             startActivityForResult(i, 1);
         }
         if(item.equals("My current location")) {
-            //TO DO: set the display back to current location
-            //at the moment MLat and MLong are getting modified
+            if(mLastLocation!=null){
+                mLocationTextView.setText(getCityFromCoordinates(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
+            }
         }
     }
 
@@ -407,35 +338,39 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
 
     }
 
+    public String getCityFromCoordinates(double Latitude, double Longitude) {
+        String cityName = null;
+        Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
+        List<Address> addresses;
+        try {
+            addresses = gcd.getFromLocation(Latitude,
+                    Longitude, 1);
+            if (addresses.size() > 0) {
+                System.out.println(addresses.get(0).getLocality());
+                cityName = addresses.get(0).getLocality();
+            }
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+        String s = "Current incident location:"+ "\n" +Latitude + "\n" + Longitude + "\n\nLocale: "
+                + cityName;
+        return s;
+    }
+
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 1) {
             if(resultCode == RESULT_OK){
                 String loc=data.getStringExtra("pickedloc");
-                String location = loc.substring(10, loc.length()-1);
+                String location = loc.substring(10, loc.length() - 1);
                 mSpinner4.setPrompt(loc);
                 String[] latlong = location.split(",");
                 mLatitude = latlong[0];
                 mLongitude = latlong[1];
-                System.out.println("PICKED LOCATION: "+location);
-                //convert co-ords to city name
-                String cityName = null;
-                Geocoder gcd = new Geocoder(getBaseContext(), Locale.getDefault());
-                List<Address> addresses;
-                try {
-                    addresses = gcd.getFromLocation(Double.parseDouble(mLatitude),
-                            Double.parseDouble(mLongitude), 1);
-                    if (addresses.size() > 0) {
-                        System.out.println(addresses.get(0).getLocality());
-                        cityName = addresses.get(0).getLocality();
-                    }
-                }
-                catch (IOException e) {
-                    e.printStackTrace();
-                }
-                String s = mLatitude + "\n" + mLongitude + "\n\nMy Current City is: "
-                        + cityName;
-                mLocationTextView.setText(s);
+                System.out.println("PICKED LOCATION: " + location);
+                //convert co-ords to city name and update incident location text view with these details
+                mLocationTextView.setText(getCityFromCoordinates(Double.parseDouble(latlong[0]), Double.parseDouble(latlong[1])));
             }
         }
     }
@@ -445,8 +380,8 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         mIncidentDetail = String.valueOf(mSpinner2.getSelectedItemPosition()+1);
         if(mLatitude.isEmpty()) {
             System.out.println("SIMULATING LOCATION");
-            mLatitude = simulatedLat;
-            mLongitude = simulatedLong;
+            mLatitude = dummyLat;
+            mLongitude = dummyLong;
         }
         AlertDialog.Builder alert = new AlertDialog.Builder(
                 this);
@@ -513,7 +448,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
             parameters.add(new BasicNameValuePair("incident_time", mTime));
             parameters.add(new BasicNameValuePair("incident_latitude", mLatitude));
             parameters.add(new BasicNameValuePair("incident_longitude", mLongitude));
-
+            parameters.add(new BasicNameValuePair("android_id", ANDROID_ID));
             // getting JSON Object
             // Note that create product url accepts POST method
             JSONObject json = jsonParser.makeHttpRequest(url_save_report,

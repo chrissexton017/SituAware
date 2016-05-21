@@ -14,6 +14,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
@@ -31,15 +32,22 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class TrackingActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -56,8 +64,10 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
     String[] incidentTypes;
 
     Context mContext;
-    // url to save report
+    // url to get all incidents, to be run when activity first opens
     private static final String url_get_incidents = "http://situaware.kodstack.com/get_all_incidents.php";
+    // url to get new incidents since last check, to be run periodically
+    private static final String url_get_new_incidents = "http://situaware.kodstack.com/get_new_incidents.php";
 
     //mode for map: tracking or location picking
     public static String MODE="Track";
@@ -69,6 +79,10 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
     String mLongitude = "";
     MarkerOptions mPosition;
     Marker mMarker;
+    //used to specify if incidents found each time database called
+    boolean newIncidentsFound = false;
+    //the report_id (primary key, unique) of the last incident retrieved  - all incidents in db with higher id will be new
+    int lastIncident = 0;
 
     // JSON Node names
     private static final String TAG_SUCCESS = "success";
@@ -82,6 +96,9 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         setContentView(R.layout.activity_track);
         if(getIntent().hasExtra(MODE)) {
             MODE="pick";
+        }
+        else{
+            MODE="Track";
         }
         //Create a location manager
         mLocationManager = (LocationManager)
@@ -196,7 +213,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         mMap.moveCamera(CameraUpdateFactory.newLatLng(myLoc));
         mMap.moveCamera((CameraUpdateFactory.zoomTo(f)));
         if(MODE!="pick") {
-            new LoadAllIncidents().execute();
+            beginNewIncidentChecking();
         }
         else{
             mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -235,7 +252,21 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         }
     }
 
-
+    public void beginNewIncidentChecking() {
+        final Handler handler = new Handler();
+        Timer timer = new Timer();
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    public void run() {
+                        new LoadAllIncidents().execute();
+                    }
+                });
+            }
+        };
+        timer.schedule(task, 0, 60000); //every minute
+    }
 
     class LoadAllIncidents extends AsyncTask<String, String, String> {
 
@@ -254,8 +285,8 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         protected String doInBackground(String... args) {
             // Building Parameters
             List<NameValuePair> params = new ArrayList<NameValuePair>();
-            // getting JSON string from URL
-            JSONObject json = jsonParser.makeHttpRequest(url_get_incidents, "GET", params);
+            params.add(new BasicNameValuePair("last_incident", String.valueOf(lastIncident)));
+            JSONObject json = jsonParser.makeHttpRequest(url_get_new_incidents, "GET", params);
 
             // Check your log cat for JSON reponse
             Log.d("All Products: ", json.toString());
@@ -266,6 +297,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
                 if (success == 1) {
                     // products found
+                    newIncidentsFound = true;
                     // Getting Array of Products
                     parsedIncidents = json.getJSONArray(TAG_INCIDENTS);
                     incidents = new Incident[parsedIncidents.length()];
@@ -273,11 +305,10 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                     // looping through All Products
                     for (int i = 0; i < parsedIncidents.length(); i++) {
                         JSONObject c = parsedIncidents.getJSONObject(i);
-
                         // Storing each json item in variable
                         //String id = c.getString(TAG_PID);
                         //String name = c.getString(TAG_NAME);
-
+                        lastIncident = c.getInt("report_id");
                         int incidentCode = c.getInt("incident_code");
                         int incidentDetail = c.getInt("detail_code");
                         String time = c.getString("incident_time");
@@ -287,19 +318,10 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                         Incident inc = new Incident(incidentCode, incidentDetail, time, latitude, longitude, mContext);
                         incidents[i] = inc;
 
-                        // creating new HashMap
-                        //HashMap<String, String> map = new HashMap<String, String>();
-
-                        // adding each child node to HashMap key => value
-                        //map.put(TAG_PID, id);
-                        //map.put(TAG_NAME, name);
-
-                        // adding HashList to ArrayList
-                        //productsList.add(map);
                     }
+
                 } else {
-                    // no products found
-                    // Launch Add New product Activity
+                    // no new incidents found this time
 
                 }
             } catch (JSONException e) {
@@ -315,15 +337,16 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         protected void onPostExecute(String file_url) {
             // dismiss the dialog after getting all products
             // Add a marker in Sydney and move the camera
-            for(Incident i: incidents){
-                LatLng ltlng = new LatLng(Double.valueOf(i.getLatitude()), Double.valueOf(i.getLongitude()));
-                mMap.addMarker(new MarkerOptions()
-                        .position(ltlng)
-                        .title(incidentTypes[i.getIncidentType()])
-                        .snippet(i.getIncidentDetail()));
+            if(newIncidentsFound) {
+                for(Incident i: incidents){
+                    LatLng ltlng = new LatLng(Double.valueOf(i.getLatitude()), Double.valueOf(i.getLongitude()));
+                    mMap.addMarker(new MarkerOptions()
+                            .position(ltlng)
+                            .title(incidentTypes[i.getIncidentType()])
+                            .snippet(i.getIncidentDetail()));
+                }
             }
-
-
+            newIncidentsFound = false;
         }
 
     }

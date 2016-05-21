@@ -33,8 +33,8 @@ public class MainActivity extends AppCompatActivity {
     private Integer[] mThumbIds = {
             R.drawable.reportbutton,
             R.drawable.track,
-            R.drawable.reportbutton,
-            R.drawable.reportbutton
+            R.drawable.capture,
+            R.drawable.info
     };
 
     @Override
@@ -57,21 +57,21 @@ public class MainActivity extends AppCompatActivity {
         mLocationManager = (LocationManager)
                 getSystemService(Context.LOCATION_SERVICE);
 
-        // Here, thisActivity is the current activity
+        // Check if the Access Fine Location permission has been granted by the user
         if (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
-
-            // No explanation needed, we can request the permission.
+            // If it hasn't, request the permission
 
             ActivityCompat.requestPermissions(MainActivity.this,
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                     1);
 
-            // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-            // app-defined int constant. The callback method gets the
-            // result of the request.
+            // The callback method gets the
+            // result of the request. See method OnRequestPermissionsResult below.
 
+            //if the permission is already granted, we will get the current location and write it to SharedPreferences
+            //this can then be used as universal default location in case of problems with location updates.
         } else {
             mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
             if (mLastLocation != null) {
@@ -80,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
                 editor.putString("LastLatitude", String.valueOf(mLastLocation.getLatitude()));
                 editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
                 editor.commit();
+            } else{
+                //WE COULD NOT GET A LOCATION
             }
         }
 
@@ -99,6 +101,10 @@ public class MainActivity extends AppCompatActivity {
                 } else if (position == 1) {
                     //open activity for tracking
                     Intent intent = new Intent(mContext, TrackingActivity.class);
+                    startActivity(intent);
+                } else if (position == 2) {
+                    //open activity for capturing
+                    Intent intent = new Intent(mContext, CaptureActivity.class);
                     startActivity(intent);
                 }
 
@@ -136,6 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //permission was granted. get current location and save to SharedPreferences.
                     try {
                         mLastLocation = mLocationManager.getLastKnownLocation(mLocationManager.GPS_PROVIDER);
                         if (mLastLocation != null) {
@@ -149,13 +156,8 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println("SECURITY EXCEPTION 2" + ex.toString());
                     }
 
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-
                 } else {
-
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
+                    //permission was denied. we will not be able to use location services.
                 }
                 return;
             }
@@ -226,7 +228,17 @@ public class MainActivity extends AppCompatActivity {
 
                 });
             }
+            if(position == 2) {
+                imageButton.setOnClickListener(new View.OnClickListener() {
 
+                    @Override
+                    public void onClick(View arg0) {
+                        Intent intent = new Intent(mContext, CaptureActivity.class);
+                        startActivity(intent);
+                    }
+
+                });
+            }
 
             return grid;
         }
