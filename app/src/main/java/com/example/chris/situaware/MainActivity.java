@@ -45,13 +45,14 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         final Context mContext = this;
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setImageResource(R.mipmap.ic_emergencydial);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
             }
         });
-        fab.hide();
+        getSupportActionBar().setTitle("Welcome to Situaware");
 
         //Create a location manager
         mLocationManager = (LocationManager)
@@ -234,6 +235,17 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View arg0) {
                         Intent intent = new Intent(mContext, CaptureActivity.class);
+                        startActivity(intent);
+                    }
+
+                });
+            }
+            if(position == 3) {
+                imageButton.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View arg0) {
+                        Intent intent = new Intent(mContext, InfoActivity.class);
                         startActivity(intent);
                     }
 

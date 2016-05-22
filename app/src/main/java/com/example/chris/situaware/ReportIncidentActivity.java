@@ -62,6 +62,8 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     String dummyLong = String.valueOf(14.147706);
     String mIncidentCode;
     String mIncidentDetail;
+    //error message from server
+    String mErrorMessage = "";
     String mTime = "CURRENT_TIMESTAMP";
     java.sql.Timestamp qTime;
     private String ANDROID_ID = "test";
@@ -465,6 +467,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                     return true;
                 } else {
                     // failed to create product
+                    mErrorMessage = json.getString("message");
                     return false;
                 }
             } catch (JSONException e) {
@@ -489,6 +492,20 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
             } else {
                 //mPasswordView.setError(getString(R.string.error_incorrect_password));
                 //mPasswordView.requestFocus();
+                if(mErrorMessage.equals("User has posted too many reports!")) {
+                    AlertDialog.Builder alert = new AlertDialog.Builder(
+                            ReportIncidentActivity.this);
+                    alert.setTitle("Reporting limit reached!");
+                    alert.setMessage("You have posted too many reports and are temporarily banned");
+                    alert.setNeutralButton("OK", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    alert.show();
+                }
             }
         }
 

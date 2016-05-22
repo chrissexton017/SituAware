@@ -8,5 +8,5 @@ public class Config {
     public static final String FILE_UPLOAD_URL = "http://situaware.kodstack.com/fileupload.php";
 
     // Directory name to store captured images and videos
-    public static final String IMAGE_DIRECTORY_NAME = "Situaware File Upload";
+    public static final String IMAGE_DIRECTORY_NAME = "SituawareFileUpload";
 }

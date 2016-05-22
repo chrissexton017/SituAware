@@ -116,6 +116,7 @@
     <string name="title_activity_track">Map</string>
     <string name="title_activity_capture">CaptureActivity</string>
     <string name="title_activity_upload">UploadActivity</string>
+    <string name="title_activity_info">InfoActivity</string>
 
 
 </resources>

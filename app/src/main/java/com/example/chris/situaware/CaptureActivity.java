@@ -1,8 +1,13 @@
 package com.example.chris.situaware;
 
+import android.Manifest;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -42,6 +47,12 @@ public class CaptureActivity extends AppCompatActivity {
 
     private Button btnCapturePicture, btnRecordVideo;
 
+    static boolean mExternalStorageAvailable = false;
+    static boolean mExternalStorageWriteable = false;
+    static String state = Environment.getExternalStorageState();
+
+    static boolean mCanProceed = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,6 +76,26 @@ public class CaptureActivity extends AppCompatActivity {
 
         btnCapturePicture = (Button) findViewById(R.id.btnCapturePicture);
         btnRecordVideo = (Button) findViewById(R.id.btnRecordVideo);
+
+        // Check if the Write External Storage permission has been granted by the user
+        if (ContextCompat.checkSelfPermission(CaptureActivity.this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            // If it hasn't, request the permission
+
+            ActivityCompat.requestPermissions(CaptureActivity.this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                    1);
+
+            // The callback method gets the
+            // result of the request. See method OnRequestPermissionsResult below.
+
+            //if the permission is already granted, we will get the current location and write it to SharedPreferences
+            //this can then be used as universal default location in case of problems with location updates.
+        } else {
+
+          mCanProceed = true;
+        }
 
         /**
          * Capture image button click event
@@ -99,6 +130,29 @@ public class CaptureActivity extends AppCompatActivity {
             finish();
         }
     }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    //permission was granted. get current location and save to SharedPreferences.
+                    mCanProceed = true;
+
+                } else {
+                    //permission was denied. we will not be able to use location services.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
+    }
+
 
     /* Checking device has camera hardware or not
     * */
@@ -242,19 +296,48 @@ public class CaptureActivity extends AppCompatActivity {
      */
     private static File getOutputMediaFile(int type) {
 
+        System.out.println("MADE IT HERE!!!!!!!!!!!!!!");
+
+        while(!mCanProceed) {
+
+        }
+
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            // We can read and write the media
+            mExternalStorageAvailable = mExternalStorageWriteable = true;
+        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            // We can only read the media
+            mExternalStorageAvailable = true;
+            mExternalStorageWriteable = false;
+        } else {
+            // Something else is wrong. It may be one of many other states, but all we need
+            //  to know is we can neither read nor write
+            mExternalStorageAvailable = mExternalStorageWriteable = false;
+        }
+
+        System.out.println("AVAILABLE: "+mExternalStorageAvailable);
+        System.out.println("WRITEABLE: "+mExternalStorageWriteable);
         // External sdcard location
         File mediaStorageDir = new File(
                 Environment
                         .getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
                 Config.IMAGE_DIRECTORY_NAME);
 
+        mediaStorageDir = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/" + Config.IMAGE_DIRECTORY_NAME + "/");
+        if (!mediaStorageDir.exists()) {
+            mediaStorageDir.mkdirs();
+        }
+
+        System.out.println("ABSOLUTE PATH: "+mediaStorageDir.getAbsolutePath());
+
         // Create the storage directory if it does not exist
         if (!mediaStorageDir.exists()) {
             if (!mediaStorageDir.mkdirs()) {
                 Log.d(TAG, "Oops! Failed create "
-                        + Config.IMAGE_DIRECTORY_NAME + " directory");
+                        + Config.IMAGE_DIRECTORY_NAME + " directory" + mediaStorageDir.getPath());
                 return null;
             }
+
         }
 
         // Create a media file name

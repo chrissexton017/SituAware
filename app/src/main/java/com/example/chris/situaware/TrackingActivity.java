@@ -19,7 +19,17 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.DatePicker;
+import android.widget.Spinner;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -43,13 +53,14 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class TrackingActivity extends FragmentActivity implements OnMapReadyCallback {
+public class TrackingActivity extends AppCompatActivity implements OnMapReadyCallback, AdapterView.OnItemSelectedListener {
 
     private final String SHARED_PREFERENCES_NAME = "ourPrefs";
 
@@ -71,6 +82,8 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
     //mode for map: tracking or location picking
     public static String MODE="Track";
+
+    Timer mTimer;
 
     LocationListener mLocationListener;
     LocationManager mLocationManager;
@@ -144,6 +157,37 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
         mContext = this;
         incidentTypes = getResources().getStringArray(R.array.incident_type_array);
     }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        stopNewIncidentChecking();
+        this.finish();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.map_menu, menu);
+        MenuItem item = menu.findItem(R.id.mapspinner);
+        Spinner spinner = (Spinner) MenuItemCompat.getActionView(item);
+        ArrayAdapter<CharSequence> spinnerAdapter = ArrayAdapter.createFromResource(this,
+                R.array.incident_type_array, R.layout.spinner_item); // set the adapter to provide layout of rows and content
+        spinner.setAdapter(spinnerAdapter);
+        spinner.setOnItemSelectedListener(this); // set the listener, to perform actions based on item selection
+        return true;
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        // On selecting a spinner item
+
+    }
+
+    public void onNothingSelected(AdapterView<?> arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -254,7 +298,7 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
 
     public void beginNewIncidentChecking() {
         final Handler handler = new Handler();
-        Timer timer = new Timer();
+        mTimer = new Timer();
         TimerTask task = new TimerTask() {
             @Override
             public void run() {
@@ -265,7 +309,11 @@ public class TrackingActivity extends FragmentActivity implements OnMapReadyCall
                 });
             }
         };
-        timer.schedule(task, 0, 60000); //every minute
+        mTimer.schedule(task, 0, 60000); //every minute
+    }
+
+    public void stopNewIncidentChecking() {
+        mTimer.cancel();
     }
 
     class LoadAllIncidents extends AsyncTask<String, String, String> {
