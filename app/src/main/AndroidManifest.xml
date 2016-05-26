@@ -59,10 +59,6 @@
             android:label="@string/title_activity_capture"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
-            android:name=".UploadActivity"
-            android:label="@string/title_activity_upload"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
             android:name=".InfoActivity"
             android:label="@string/title_activity_info"
             android:parentActivityName=".MainActivity"
@@ -71,6 +67,10 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.chris.situaware.MainActivity" />
         </activity>
+        <activity
+            android:name=".UploadActivity"
+            android:label="@string/title_activity_upload"
+            android:theme="@style/AppTheme.NoActionBar"></activity>
     </application>
 
 </manifest>

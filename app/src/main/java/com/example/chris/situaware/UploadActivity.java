@@ -1,6 +1,7 @@
 package com.example.chris.situaware;
 
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
@@ -9,7 +10,10 @@ import android.view.View;
 import com.example.chris.situaware.AndroidMultiPartEntity.ProgressListener;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -20,6 +24,7 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.apache.http.entity.ContentType;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -43,7 +48,7 @@ import android.widget.VideoView;
 public class UploadActivity extends AppCompatActivity {
 
     // LogCat tag
-    private static final String TAG = CaptureActivity.class.getSimpleName();
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private ProgressBar progressBar;
     private String filePath = null;
@@ -52,6 +57,8 @@ public class UploadActivity extends AppCompatActivity {
     private VideoView vidPreview;
     private Button btnUpload;
     long totalSize = 0;
+
+    File uploadFile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,15 +77,17 @@ public class UploadActivity extends AppCompatActivity {
         });
         fab.hide();
 
+
         txtPercentage = (TextView) findViewById(R.id.txtPercentage);
         btnUpload = (Button) findViewById(R.id.btnUpload);
         progressBar = (ProgressBar) findViewById(R.id.progressBar);
         imgPreview = (ImageView) findViewById(R.id.imgPreview);
         vidPreview = (VideoView) findViewById(R.id.videoPreview);
 
-        /* Changing action bar background color
-        getActionBar().setBackgroundDrawable(
-                new ColorDrawable(Color.parseColor(#1f2649));*/
+        // Changing action bar background color
+        /*getActionBar().setBackgroundDrawable(
+                new ColorDrawable(Color.parseColor(getResources().getString(
+                        R.color.action_bar))));*/
 
         // Receiving the data from previous activity
         Intent i = getIntent();
@@ -105,7 +114,6 @@ public class UploadActivity extends AppCompatActivity {
                 new UploadFileToServer().execute();
             }
         });
-
     }
 
     /**
@@ -124,8 +132,22 @@ public class UploadActivity extends AppCompatActivity {
             options.inSampleSize = 8;
 
             final Bitmap bitmap = BitmapFactory.decodeFile(filePath, options);
+            //Bitmap bm = BitmapFactory.decodeResource( getResources(), R.drawable.ny);
 
             imgPreview.setImageBitmap(bitmap);
+            /*String extStorageDirectory = Environment.getExternalStorageDirectory().toString();
+
+            File file = new File(extStorageDirectory, "ny.PNG");
+            try{
+                FileOutputStream outStream = new FileOutputStream(file);
+                bm.compress(Bitmap.CompressFormat.PNG, 100, outStream);
+                outStream.flush();
+                outStream.close();
+            } catch(Exception ex) {
+
+            }
+            uploadFile = file;*/
+
         } else {
             imgPreview.setVisibility(View.GONE);
             vidPreview.setVisibility(View.VISIBLE);
@@ -181,10 +203,11 @@ public class UploadActivity extends AppCompatActivity {
                         });
 
                 File sourceFile = new File(filePath);
+                //File sourceFile = uploadFile;
 
                 // Adding file data to http body
                 entity.addPart("image", new FileBody(sourceFile));
-
+                //entity.addPart("image", new FileBody(uploadFile));
                 // Extra parameters if you want to pass to server
                 entity.addPart("website",
                         new StringBody("www.androidhive.info"));
@@ -243,6 +266,5 @@ public class UploadActivity extends AppCompatActivity {
         AlertDialog alert = builder.create();
         alert.show();
     }
-
 
 }

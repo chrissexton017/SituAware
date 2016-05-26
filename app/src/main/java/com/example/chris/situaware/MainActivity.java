@@ -37,6 +37,9 @@ public class MainActivity extends AppCompatActivity {
             R.drawable.info
     };
 
+    String imageUri = "drawable://" + R.drawable.capture;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         final Context mContext = this;
+        System.out.println("IMAGE URI:" + imageUri);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setImageResource(R.mipmap.ic_emergencydial);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -247,6 +251,19 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View arg0) {
                         Intent intent = new Intent(mContext, InfoActivity.class);
                         startActivity(intent);
+                    }
+
+                });
+            }
+            if(position == 4) {
+                imageButton.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View arg0) {
+                        Intent i = new Intent(MainActivity.this, UploadActivity.class);
+                        i.putExtra("filePath", imageUri);
+                        i.putExtra("isImage", true);
+                        startActivity(i);
                     }
 
                 });
