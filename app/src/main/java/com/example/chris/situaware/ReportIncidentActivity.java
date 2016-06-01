@@ -8,13 +8,17 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.BitmapFactory;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -36,6 +40,7 @@ import java.util.Locale;
 
 import android.widget.ArrayAdapter;
 import android.widget.DatePicker;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
@@ -79,6 +84,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
     private Spinner mSpinner2;
     private Spinner mSpinner3;
     private Spinner mSpinner4;
+    private Spinner mSpinner5;
 
     private HashMap<Integer, Integer> spinnerMap = new HashMap<>();
 
@@ -183,6 +189,11 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 R.array.incident_location_array, R.layout.spinner_item);
         mSpinner4.setAdapter(spinner4Adapter);
         mSpinner4.setOnItemSelectedListener(this);
+        mSpinner5 = (Spinner)findViewById(R.id.spinnerPic);
+        ArrayAdapter<CharSequence> spinner5Adapter = ArrayAdapter.createFromResource(this,
+                R.array.evidence_array, R.layout.spinner_item);
+        mSpinner5.setAdapter(spinner5Adapter);
+        mSpinner5.setOnItemSelectedListener(this);
 
         spinnerMap.put(0, R.array.accident_detail_array);
         spinnerMap.put(1, R.array.antisocial_detail_array);
@@ -333,6 +344,13 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 mLocationTextView.setText(getCityFromCoordinates(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
             }
         }
+        if(item.equals("Select a captured image (from Gallery)")) {
+            // Create intent to Open Image applications like Gallery, Google Photos
+            Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+                    android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            // Start the Intent
+            startActivityForResult(galleryIntent, 2);
+        }
     }
 
     public void onNothingSelected(AdapterView<?> arg0) {
@@ -355,7 +373,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
         catch (IOException e) {
             e.printStackTrace();
         }
-        String s = "Current incident location:"+ "\n" +Latitude + "\n" + Longitude + "\n\nLocale: "
+        String s = "Current latitude: " +Latitude + "\n" + "Current latitude: " + Longitude + "\nLocale: "
                 + cityName;
         return s;
     }
@@ -373,6 +391,33 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 System.out.println("PICKED LOCATION: " + location);
                 //convert co-ords to city name and update incident location text view with these details
                 mLocationTextView.setText(getCityFromCoordinates(Double.parseDouble(latlong[0]), Double.parseDouble(latlong[1])));
+            }
+        }
+        if (requestCode == 2) {
+            if(resultCode == RESULT_OK) {
+                // Get the Image from data
+
+                Uri selectedImage = data.getData();
+                String[] filePathColumn = { MediaStore.Images.Media.DATA };
+
+                // Get the cursor
+                Cursor cursor = getContentResolver().query(selectedImage,
+                        filePathColumn, null, null, null);
+                // Move to first row
+                cursor.moveToFirst();
+
+                int columnIndex = cursor.getColumnIndex(filePathColumn[0]);
+                String imgDecodableString = cursor.getString(columnIndex);
+                cursor.close();
+                /*ImageView imgView = (ImageView) findViewById(R.id.imgView);
+                // Set the Image in ImageView after decoding the String
+                imgView.setImageBitmap(BitmapFactory
+                        .decodeFile(imgDecodableString));*/
+                String[] array = {imgDecodableString, "Choose different immage"};
+                ArrayAdapter dataAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, array);
+                //dataAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                mSpinner5.setAdapter(dataAdapter);
+
             }
         }
     }
@@ -546,7 +591,7 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
             catch (IOException e) {
                 e.printStackTrace();
             }
-            String s = longitude + "\n" + latitude + "\n\nMy Current City is: "
+            String s = longitude + "\n" + latitude + "\nMy Current City is: "
                     + cityName;
            // editLocation.setText(s);
         }

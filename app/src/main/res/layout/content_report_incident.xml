@@ -88,6 +88,25 @@
         android:gravity="right"
         />
 
+    <!-- Text Label -->
+    <TextView
+        android:id="@+id/textViewPic"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dip"
+        android:text="Photo Evidence"
+        android:layout_marginBottom="5dp"
+        />
+
+    <!-- Spinner Element -->
+    <Spinner
+        android:id="@+id/spinnerPic"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:prompt="@string/spinner_title"
+        android:gravity="right"
+        />
+
     <TextView
         android:id="@+id/textView5"
         android:layout_width="fill_parent"

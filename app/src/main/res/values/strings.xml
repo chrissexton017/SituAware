@@ -113,10 +113,17 @@
         <item>My current location</item>
         <item>Another place (choose location)</item>
     </string-array>
+
+    <string-array name="evidence_array">
+        <item>None</item>
+        <item>Select a captured image (from Gallery)</item>
+    </string-array>
+
     <string name="title_activity_track">Map</string>
     <string name="title_activity_capture">CaptureActivity</string>
     <string name="title_activity_upload">UploadActivity</string>
     <string name="title_activity_info">InfoActivity</string>
+    <string name="title_activity_tracking_choice">TrackingChoice</string>
 
 
 </resources>

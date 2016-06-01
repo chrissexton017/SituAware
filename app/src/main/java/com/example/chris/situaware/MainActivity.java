@@ -28,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
     LocationManager mLocationManager;
     Location mLastLocation;
 
+    String dummyLat = String.valueOf(56.048495);
+    String dummyLong = String.valueOf(14.147706);
+
     private final String SHARED_PREFERENCES_NAME = "ourPrefs";
 
     private Integer[] mThumbIds = {
@@ -86,7 +89,12 @@ public class MainActivity extends AppCompatActivity {
                 editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
                 editor.commit();
             } else{
-                //WE COULD NOT GET A LOCATION
+                //we couldn't get a location so use default
+                SharedPreferences sharedPref = MainActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("LastLatitude", dummyLat);
+                editor.putString("LastLongitude", dummyLong);
+                editor.commit();
             }
         }
 
@@ -155,6 +163,13 @@ public class MainActivity extends AppCompatActivity {
                             SharedPreferences.Editor editor = sharedPref.edit();
                             editor.putString("LastLatitude", String.valueOf(mLastLocation.getLatitude()));
                             editor.putString("LastLongitude", String.valueOf(mLastLocation.getLongitude()));
+                            editor.commit();
+                        } else{
+                            //couldn't get location, use default
+                            SharedPreferences sharedPref = MainActivity.this.getSharedPreferences(SHARED_PREFERENCES_NAME, Context.MODE_PRIVATE);
+                            SharedPreferences.Editor editor = sharedPref.edit();
+                            editor.putString("LastLatitude", dummyLat);
+                            editor.putString("LastLongitude", dummyLong);
                             editor.commit();
                         }
                     }catch(SecurityException ex) {
@@ -227,7 +242,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void onClick(View arg0) {
-                        Intent intent = new Intent(mContext, TrackingActivity.class);
+                        Intent intent = new Intent(mContext, TrackingChoice.class);
                         startActivity(intent);
                     }
 
