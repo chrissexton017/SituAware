@@ -210,8 +210,8 @@ public class UploadActivity extends AppCompatActivity {
                 //entity.addPart("image", new FileBody(uploadFile));
                 // Extra parameters if you want to pass to server
                 entity.addPart("website",
-                        new StringBody("www.androidhive.info"));
-                entity.addPart("email", new StringBody("abc@gmail.com"));
+                        new StringBody("situaware"));
+                entity.addPart("email", new StringBody("situaware@gmail.com"));
 
                 totalSize = entity.getContentLength();
                 httppost.setEntity(entity);

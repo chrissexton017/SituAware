@@ -30,7 +30,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-public class CaptureActivity extends AppCompatActivity {
+public class
+        CaptureActivity extends AppCompatActivity {
 
     // LogCat tag
     private static final String TAG = CaptureActivity.class.getSimpleName();
