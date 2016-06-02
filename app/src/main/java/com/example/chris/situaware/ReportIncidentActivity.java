@@ -143,7 +143,9 @@ public class ReportIncidentActivity extends AppCompatActivity implements Adapter
                 mLocationTextView.setText(getCityFromCoordinates(mLastLocation.getLatitude(), mLastLocation.getLongitude()));
             }
             else{
-                //LOCATION CAME BACK NULL: TRY SharedPreferences
+                mLatitude = dummyLat;
+                mLongitude = dummyLong;
+
             }
         }
         //if permission has been granted this should work

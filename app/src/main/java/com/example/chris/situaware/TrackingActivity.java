@@ -391,7 +391,7 @@ public class TrackingActivity extends AppCompatActivity implements OnMapReadyCal
                     mMap.addMarker(new MarkerOptions()
                             .position(ltlng)
                             .title(incidentTypes[i.getIncidentType()])
-                            .snippet(i.getIncidentDetail()));
+                            .snippet(i.getIncidentDetail()+" "+i.getIncidentTime()));
                 }
             }
             newIncidentsFound = false;
